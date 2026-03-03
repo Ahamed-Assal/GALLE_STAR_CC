@@ -10,6 +10,7 @@ const credentialsSchema = z.object({
 });
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
+  trustHost: true,
   session: {
     strategy: "jwt",
   },
@@ -23,30 +24,35 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         password: {},
       },
       async authorize(rawCredentials) {
-        const parsed = credentialsSchema.safeParse(rawCredentials);
-        if (!parsed.success) {
+        try {
+          const parsed = credentialsSchema.safeParse(rawCredentials);
+          if (!parsed.success) {
+            return null;
+          }
+
+          const user = await prisma.user.findUnique({
+            where: { email: parsed.data.email.toLowerCase() },
+          });
+
+          if (!user) {
+            return null;
+          }
+
+          const isValid = await bcrypt.compare(parsed.data.password, user.passwordHash);
+          if (!isValid) {
+            return null;
+          }
+
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+          };
+        } catch (error) {
+          console.error("Credentials authorize failed:", error);
           return null;
         }
-
-        const user = await prisma.user.findUnique({
-          where: { email: parsed.data.email.toLowerCase() },
-        });
-
-        if (!user) {
-          return null;
-        }
-
-        const isValid = await bcrypt.compare(parsed.data.password, user.passwordHash);
-        if (!isValid) {
-          return null;
-        }
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-        };
       },
     }),
   ],
