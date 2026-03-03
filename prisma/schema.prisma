@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  admin
+  team_owner
+  scorer
+  public
+}
+
+enum MatchMode {
+  practice
+  tournament
+}
+
+enum MatchStatus {
+  live
+  completed
+}
+
+enum TeamSide {
+  A
+  B
+}
+
+enum ScoreEventType {
+  dot_ball
+  run_1
+  run_2
+  run_3
+  run_4
+  run_6
+  wicket
+  wide
+  no_ball
+  undo
+}
+
+model User {
+  id            String       @id @default(uuid()) @db.Uuid
+  name          String?
+  email         String       @unique
+  passwordHash  String
+  role          UserRole     @default(public)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  teams         Team[]
+  scorerOneFor  Match[]      @relation("ScorerOne")
+  scorerTwoFor  Match[]      @relation("ScorerTwo")
+  createdMatches Match[]     @relation("CreatedMatches")
+  scoreEvents   ScoreEvent[]
+
+  @@map("users")
+}
+
+model Team {
+  id          String    @id @default(uuid()) @db.Uuid
+  name        String
+  logoUrl     String?
+  ownerId     String    @db.Uuid
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  players     Player[]
+  matchesAsA  Match[]   @relation("TeamA")
+  matchesAsB  Match[]   @relation("TeamB")
+
+  @@unique([ownerId, name])
+  @@map("teams")
+}
+
+model Player {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  jerseyNumber Int?
+  teamId       String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  team         Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+
+  @@map("players")
+}
+
+model Match {
+  id              String       @id @default(uuid()) @db.Uuid
+  mode            MatchMode
+  status          MatchStatus  @default(live)
+  teamAId         String?      @db.Uuid
+  teamBId         String?      @db.Uuid
+  teamAName       String
+  teamBName       String
+  overs           Int
+  ballsPerOver    Int
+  numberOfPlayers Int
+  scorer1Id       String       @db.Uuid
+  scorer2Id       String       @db.Uuid
+  createdById     String       @db.Uuid
+  isEphemeral     Boolean      @default(false)
+  targetRuns      Int?
+  innings         Int          @default(1)
+  battingSide     TeamSide     @default(A)
+  firstInningsBattingSide TeamSide?
+  firstInningsRuns Int?
+  firstInningsWickets Int?
+  firstInningsBalls Int?
+  winnerTeamName  String?
+  currentRuns     Int          @default(0)
+  currentWickets  Int          @default(0)
+  currentBalls    Int          @default(0)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  completedAt     DateTime?
+
+  teamA           Team?        @relation("TeamA", fields: [teamAId], references: [id], onDelete: SetNull)
+  teamB           Team?        @relation("TeamB", fields: [teamBId], references: [id], onDelete: SetNull)
+  scorer1         User         @relation("ScorerOne", fields: [scorer1Id], references: [id], onDelete: Restrict)
+  scorer2         User         @relation("ScorerTwo", fields: [scorer2Id], references: [id], onDelete: Restrict)
+  createdBy       User         @relation("CreatedMatches", fields: [createdById], references: [id], onDelete: Restrict)
+  scoreEvents     ScoreEvent[]
+
+  @@map("matches")
+}
+
+model ScoreEvent {
+  id           String         @id @default(uuid()) @db.Uuid
+  matchId      String         @db.Uuid @map("match_id")
+  userId       String         @db.Uuid @map("user_id")
+  eventType    ScoreEventType @map("event_type")
+  innings      Int            @default(1)
+  runsDelta    Int            @default(0) @map("runs_delta")
+  wicketDelta  Int            @default(0) @map("wicket_delta")
+  ballDelta    Int            @default(0) @map("ball_delta")
+  note         String?
+  createdAt    DateTime       @default(now()) @map("created_at")
+
+  match        Match          @relation(fields: [matchId], references: [id], onDelete: Cascade)
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("score_events")
+}
