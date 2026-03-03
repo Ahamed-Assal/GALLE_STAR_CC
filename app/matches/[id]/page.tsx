@@ -29,7 +29,7 @@ export default async function MatchDetailPage({
 
   const events = await prisma.scoreEvent.findMany({
     where: { matchId: id },
-    include: { user: { select: { name: true, email: true } } },
+    include: { user: { select: { id: true, name: true, email: true } } },
     orderBy: { createdAt: "asc" },
   });
 
