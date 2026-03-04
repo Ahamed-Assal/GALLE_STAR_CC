@@ -8,7 +8,7 @@ const roleRequired: Record<string, string[]> = {
   "/teams": ["admin", "team_owner", "scorer", "public"],
 };
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   const path = request.nextUrl.pathname;
 
   const protectedPath = Object.keys(roleRequired).find((prefix) =>
