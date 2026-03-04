@@ -11,14 +11,34 @@ function getAccessLabel(role?: string) {
 }
 
 export default async function DashboardPage() {
-  const session = await auth();
-  const [teamsCount, matchesCount, ownerAdminCount, teamMemberCount, myTeamsCount] = await Promise.all([
-    prisma.team.count(),
-    prisma.match.count(),
-    prisma.user.count({ where: { role: { in: ["admin", "team_owner"] } } }),
-    prisma.user.count({ where: { role: "scorer" } }),
-    session?.user?.id ? prisma.team.count({ where: { ownerId: session.user.id } }) : Promise.resolve(0),
-  ]);
+  let session;
+  try {
+    session = await auth();
+  } catch (e) {
+    console.error("Dashboard auth failed:", e);
+    throw e;
+  }
+
+  let teamsCount = 0;
+  let matchesCount = 0;
+  let ownerAdminCount = 0;
+  let teamMemberCount = 0;
+  let myTeamsCount = 0;
+
+  try {
+    [teamsCount, matchesCount, ownerAdminCount, teamMemberCount, myTeamsCount] = await Promise.all([
+      prisma.team.count(),
+      prisma.match.count(),
+      prisma.user.count({ where: { role: { in: ["admin", "team_owner"] } } }),
+      prisma.user.count({ where: { role: "scorer" } }),
+      session?.user?.id ? prisma.team.count({ where: { ownerId: session.user.id } }) : Promise.resolve(0),
+    ]);
+  } catch (e) {
+    console.error("Dashboard Prisma failed:", e);
+    throw new Error(
+      `Database error: ${e instanceof Error ? e.message : String(e)}. Ensure DATABASE_URL uses port 6543 with ?pgbouncer=true for Supabase pooler, and DIRECT_URL is set.`
+    );
+  }
 
   return (
     <section className="space-y-6">

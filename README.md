@@ -31,7 +31,8 @@ node scripts/extract-logo-color.mjs public/logo.jpg
 
 Copy `.env.example` to `.env` and set values:
 
-- `DATABASE_URL`
+- `DATABASE_URL` – PostgreSQL connection string
+- `DIRECT_URL` – Same as `DATABASE_URL` for local; for Vercel/Supabase use session pooler (port 5432)
 - `NEXTAUTH_SECRET`
 - `NEXTAUTH_URL`
 - `NEXT_PUBLIC_SUPABASE_URL`
@@ -63,7 +64,9 @@ This creates the required models:
 
 - `postinstall` automatically runs `prisma generate`
 - Configure all env vars in Vercel dashboard
-- Use Supabase PostgreSQL connection string for `DATABASE_URL`
+- **Supabase + Vercel**: Use transaction pooler for `DATABASE_URL` (port 6543) with `?pgbouncer=true`, and session pooler for `DIRECT_URL` (port 5432):
+  - `DATABASE_URL="postgres://[USER].[PROJECT]:[PASSWORD]@[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"`
+  - `DIRECT_URL="postgres://[USER].[PROJECT]:[PASSWORD]@[REGION].pooler.supabase.com:5432/postgres"`
 
 ## App Structure
 

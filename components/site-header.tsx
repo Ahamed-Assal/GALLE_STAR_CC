@@ -5,7 +5,17 @@ import { MobileNavMenu } from "@/components/mobile-nav-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 async function LogoutButton() {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch (e) {
+    console.error("SiteHeader auth failed:", e);
+    return (
+      <Link className="rounded-md border px-3 py-2 text-sm" href="/login">
+        Login
+      </Link>
+    );
+  }
   if (!session?.user) {
     return (
       <Link className="rounded-md border px-3 py-2 text-sm" href="/login">
@@ -29,7 +39,13 @@ async function LogoutButton() {
 }
 
 export async function SiteHeader() {
-  const session = await auth();
+  let session;
+  try {
+    session = await auth();
+  } catch (e) {
+    console.error("SiteHeader auth failed:", e);
+    session = null;
+  }
 
   return (
     <header className="sticky top-0 z-20 border-b bg-white/90 backdrop-blur dark:bg-slate-950/90">

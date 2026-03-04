@@ -138,7 +138,6 @@ export function LiveScoring({
     [events, matchState.innings],
   );
   const inningsLockUserId = inningsLockEvent?.user?.id ?? "";
-  const inningsLockUserLabel = inningsLockEvent?.user?.name ?? inningsLockEvent?.user?.email ?? "another scorer";
   const canScore = matchState.mode === "practice"
     ? Boolean(currentUserId)
     : Boolean(currentUserId) &&
