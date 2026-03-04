@@ -19,9 +19,12 @@ export function MobileNavMenu({
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
-        className="rounded-md border px-3 py-2 text-sm font-semibold"
+        className="flex flex-col gap-1.5 rounded-md border p-2.5"
+        aria-label="Open menu"
       >
-        Menu
+        <span className="h-0.5 w-5 bg-current" />
+        <span className="h-0.5 w-5 bg-current" />
+        <span className="h-0.5 w-5 bg-current" />
       </button>
       {open && (
         <div className="absolute right-0 top-12 w-56 space-y-2 rounded-xl border bg-white p-3 shadow-lg dark:bg-slate-900">
