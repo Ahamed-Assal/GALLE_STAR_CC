@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 
@@ -16,7 +17,7 @@ export default async function DashboardPage() {
     session = await auth();
   } catch (e) {
     console.error("Dashboard auth failed:", e);
-    throw e;
+    redirect("/login");
   }
 
   let teamsCount = 0;
