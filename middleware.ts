@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/auth";
+import { getToken } from "next-auth/jwt";
+import type { NextRequest } from "next/server";
 
 const roleRequired: Record<string, string[]> = {
   "/admin": ["admin"],
@@ -7,9 +8,8 @@ const roleRequired: Record<string, string[]> = {
   "/teams": ["admin", "team_owner", "scorer", "public"],
 };
 
-export default auth((req) => {
-  const { nextUrl, auth: session } = req;
-  const path = nextUrl.pathname;
+export async function middleware(request: NextRequest) {
+  const path = request.nextUrl.pathname;
 
   const protectedPath = Object.keys(roleRequired).find((prefix) =>
     path.startsWith(prefix),
@@ -19,7 +19,7 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  if (path.startsWith("/matches/") && nextUrl.searchParams.get("practice") === "1") {
+  if (path.startsWith("/matches/") && request.nextUrl.searchParams.get("practice") === "1") {
     return NextResponse.next();
   }
 
@@ -31,17 +31,23 @@ export default auth((req) => {
     return NextResponse.next();
   }
 
-  if (!session?.user) {
-    return NextResponse.redirect(new URL("/login", nextUrl));
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
+  });
+
+  if (!token?.id) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  const role = (token.role as string) ?? "public";
   const allowedRoles = roleRequired[protectedPath];
-  if (!allowedRoles.includes(session.user.role)) {
-    return NextResponse.redirect(new URL("/unauthorized", nextUrl));
+  if (!allowedRoles.includes(role)) {
+    return NextResponse.redirect(new URL("/unauthorized", request.url));
   }
 
   return NextResponse.next();
-});
+}
 
 export const config = {
   matcher: ["/dashboard/:path*", "/teams/:path*", "/matches/:path*", "/practice/:path*", "/admin/:path*"],
