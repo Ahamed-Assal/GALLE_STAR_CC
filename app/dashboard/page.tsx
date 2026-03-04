@@ -19,6 +19,9 @@ export default async function DashboardPage() {
     console.error("Dashboard auth failed:", e);
     redirect("/login");
   }
+  if (!session?.user) {
+    redirect("/login");
+  }
 
   let teamsCount = 0;
   let matchesCount = 0;

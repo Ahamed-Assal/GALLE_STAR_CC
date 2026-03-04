@@ -64,6 +64,11 @@ This creates the required models:
 
 - `postinstall` automatically runs `prisma generate`
 - Configure all env vars in Vercel dashboard
+- **Run migrations on production database** (required before registration works):
+  ```bash
+  DATABASE_URL="your-production-url" npx prisma migrate deploy
+  ```
+  Or set `DATABASE_URL` in `.env` to your Supabase URL, then run `npx prisma migrate deploy`
 - **Supabase + Vercel**: Use transaction pooler for `DATABASE_URL` (port 6543) with `?pgbouncer=true`, and session pooler for `DIRECT_URL` (port 5432):
   - `DATABASE_URL="postgres://[USER].[PROJECT]:[PASSWORD]@[REGION].pooler.supabase.com:6543/postgres?pgbouncer=true"`
   - `DIRECT_URL="postgres://[USER].[PROJECT]:[PASSWORD]@[REGION].pooler.supabase.com:5432/postgres"`

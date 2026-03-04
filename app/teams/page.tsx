@@ -13,6 +13,9 @@ export default async function TeamsPage() {
     console.error("Teams auth failed:", e);
     redirect("/login");
   }
+  if (!session?.user) {
+    redirect("/login");
+  }
 
   let currentUser: { id: string; role: string } | null = null;
   let teams;
