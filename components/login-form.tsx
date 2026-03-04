@@ -2,7 +2,6 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -15,7 +14,6 @@ const loginSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 
 export function LoginForm() {
-  const router = useRouter();
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: "", password: "" },
@@ -34,8 +32,8 @@ export function LoginForm() {
     }
 
     toast.success("Welcome back");
-    router.push("/dashboard");
-    router.refresh();
+    // Use redirect so session cookie is set before navigation
+    window.location.href = "/dashboard";
   });
 
   return (
