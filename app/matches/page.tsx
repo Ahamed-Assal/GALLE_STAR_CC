@@ -8,20 +8,34 @@ export const dynamic = "force-dynamic";
 export default async function MatchesPage() {
   const session = await auth();
   const canCreateTournament = Boolean(session?.user);
-  const currentUser = session?.user?.id || session?.user?.email
-    ? await prisma.user.findFirst({
-        where: {
-          OR: [
-            session?.user?.id ? { id: session.user.id } : undefined,
-            session?.user?.email ? { email: session.user.email } : undefined,
-          ].filter(Boolean) as Array<{ id?: string; email?: string }>,
-        },
-        select: { role: true },
-      })
-    : null;
+  const currentUser =
+    session?.user?.id || session?.user?.email
+      ? await prisma.user
+          .findFirst({
+            where: session.user.id
+              ? { id: session.user.id }
+              : { email: session.user.email!.toLowerCase() },
+            select: { role: true },
+          })
+          .catch(() => null)
+      : null;
   const isAdmin = currentUser?.role === "admin";
 
-  const [teams, matches] = await Promise.all([
+  let teams: Array<{ id: string; name: string; players: Array<{ name: string }> }> = [];
+  let matches: Array<{
+    id: string;
+    teamAName: string;
+    teamBName: string;
+    createdById: string;
+    status: string;
+    currentRuns: number;
+    currentWickets: number;
+    currentBalls: number;
+    ballsPerOver: number;
+  }> = [];
+
+  try {
+    [teams, matches] = await Promise.all([
     prisma.team.findMany({
       select: { id: true, name: true, players: { select: { name: true } } },
       orderBy: { name: "asc" },
@@ -35,6 +49,9 @@ export default async function MatchesPage() {
       take: 20,
     }),
   ]);
+  } catch (e) {
+    console.error("Matches page Prisma failed:", e);
+  }
 
   return (
     <section className="space-y-5">

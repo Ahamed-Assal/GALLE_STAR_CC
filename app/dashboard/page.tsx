@@ -35,8 +35,19 @@ export default async function DashboardPage() {
     ]);
   } catch (e) {
     console.error("Dashboard Prisma failed:", e);
-    throw new Error(
-      `Database error: ${e instanceof Error ? e.message : String(e)}. Ensure DATABASE_URL uses port 6543 with ?pgbouncer=true for Supabase pooler, and DIRECT_URL is set.`
+    return (
+      <section className="space-y-6">
+        <div className="rounded-xl border border-red-200 bg-red-50 p-5 dark:border-red-900 dark:bg-red-950/50">
+          <h1 className="text-xl font-bold text-red-600 dark:text-red-400">Database connection error</h1>
+          <p className="mt-2 text-sm text-red-700 dark:text-red-300">
+            Could not load dashboard. Ensure DATABASE_URL uses port 6543 with ?pgbouncer=true for
+            Supabase pooler, and DIRECT_URL is set in Vercel.
+          </p>
+          <p className="mt-1 text-xs text-red-600 dark:text-red-400">
+            {e instanceof Error ? e.message : String(e)}
+          </p>
+        </div>
+      </section>
     );
   }
 

@@ -1,31 +1,37 @@
 import { PracticeMatchCreator } from "@/components/practice-match-creator";
-import { auth } from "@/auth";
 import { FinishedPracticeMatches } from "@/components/finished-practice-matches";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 
 export default async function PracticePage() {
   const session = await auth();
-  const [completedPracticeMatches, currentUser] = await Promise.all([
-    prisma.match.findMany({
-      where: {
-        mode: "practice",
-        status: "completed",
-      },
-      orderBy: { completedAt: "desc" },
-      take: 20,
-    }),
-    session?.user?.id || session?.user?.email
-      ? prisma.user.findFirst({
-          where: {
-            OR: [
-              session?.user?.id ? { id: session.user.id } : undefined,
-              session?.user?.email ? { email: session.user.email } : undefined,
-            ].filter(Boolean) as Array<{ id?: string; email?: string }>,
-          },
-          select: { role: true },
-        })
-      : Promise.resolve(null),
-  ]);
+  let completedPracticeMatches: Awaited<ReturnType<typeof prisma.match.findMany>> = [];
+  let currentUser: { role: string } | null = null;
+
+  try {
+    [completedPracticeMatches, currentUser] = await Promise.all([
+      prisma.match.findMany({
+        where: { mode: "practice", status: "completed" },
+        orderBy: { completedAt: "desc" },
+        take: 20,
+      }),
+      session?.user?.id || session?.user?.email
+        ? prisma.user
+            .findFirst({
+              where: session.user.id
+                ? { id: session.user.id }
+                : { email: session.user.email!.toLowerCase() },
+              select: { role: true },
+            })
+            .catch(() => null)
+        : Promise.resolve(null),
+    ]);
+  } catch (e) {
+    console.error("Practice page Prisma failed:", e);
+  }
+
   const isAdmin = currentUser?.role === "admin";
 
   return (
