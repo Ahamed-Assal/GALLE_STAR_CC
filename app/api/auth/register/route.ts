@@ -44,6 +44,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
+    console.error("Registration failed:", error);
     const message = error instanceof Error ? error.message : "Registration failed";
     if (message.includes("DATABASE_URL")) {
       return NextResponse.json(
@@ -51,6 +52,15 @@ export async function POST(req: Request) {
         { status: 500 },
       );
     }
-    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
+    if (message.includes("connect") || message.includes("connection") || message.includes("pooler") || message.includes("pgbouncer")) {
+      return NextResponse.json(
+        { error: "Database connection failed. Check DATABASE_URL and DIRECT_URL on Vercel." },
+        { status: 500 },
+      );
+    }
+    return NextResponse.json(
+      { error: process.env.NODE_ENV === "development" ? message : "Registration failed" },
+      { status: 500 },
+    );
   }
 }

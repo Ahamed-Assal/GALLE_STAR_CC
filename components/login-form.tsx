@@ -21,18 +21,17 @@ export function LoginForm() {
 
   const onSubmit = form.handleSubmit(async (values) => {
     const res = await signIn("credentials", {
-      email: values.email,
+      email: values.email.toLowerCase().trim(),
       password: values.password,
       redirect: false,
     });
 
     if (res?.error) {
-      toast.error("Invalid credentials");
+      toast.error(res.error === "CredentialsSignin" ? "Invalid email or password" : String(res.error));
       return;
     }
 
     toast.success("Welcome back");
-    // Use redirect so session cookie is set before navigation
     window.location.href = "/dashboard";
   });
 

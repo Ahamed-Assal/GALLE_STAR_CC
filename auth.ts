@@ -30,8 +30,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             return null;
           }
 
+          const email = parsed.data.email.toLowerCase().trim();
           const user = await prisma.user.findUnique({
-            where: { email: parsed.data.email.toLowerCase() },
+            where: { email },
           });
 
           if (!user) {

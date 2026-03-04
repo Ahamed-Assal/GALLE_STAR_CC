@@ -29,21 +29,26 @@ export function RegisterForm() {
       body: JSON.stringify(values),
     });
 
+    const body = await res.json().catch(() => ({}));
     if (!res.ok) {
-      const body = await res.json();
       toast.error(body.error ?? "Could not register");
       return;
     }
 
-    await signIn("credentials", {
-      email: values.email,
+    const signInRes = await signIn("credentials", {
+      email: values.email.toLowerCase(),
       password: values.password,
       redirect: false,
     });
 
+    if (signInRes?.error) {
+      toast.error("Account created but login failed. Please try logging in.");
+      router.push("/login");
+      return;
+    }
+
     toast.success("Account created");
-    router.push("/dashboard");
-    router.refresh();
+    window.location.href = "/dashboard";
   });
 
   return (
